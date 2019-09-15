@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop.xsd
+        http://www.springframework.org/schema/tx
+        http://www.springframework.org/schema/tx/spring-tx.xsd
+        http://www.springframework.org/schema/mvc
+        http://www.springframework.org/schema/mvc/spring-mvc.xsd">
+
+	<!-- 开启注解驱动 -->
+	<!-- conversion-service="conversionService" 表示注册转换服务 -->
+	<!-- validator="myValidator" 表示注册验证器 -->
+	<mvc:annotation-driven conversion-service="conversionService" validator="myValidator"/>
+	
+	<!-- 注册组件扫描器 -->
+	<context:component-scan base-package="com.study.springmvc"></context:component-scan>
+	
+	<!-- 注册bean名称视图解析器 BeanNameViewResolver -->
+	<!-- 如下，注册好bean名称视图解析器后，需要手动配置bean视图名称 -->
+	<bean class="org.springframework.web.servlet.view.BeanNameViewResolver"></bean>
+	
+	<!-- 内部资源视图 -->   
+	<bean id = "test" class="org.springframework.web.servlet.view.InternalResourceView">
+		<property name="url" value="/jsp/welcome.jsp"></property>
+	</bean>
+	
+	<!-- 外部资源视图 -->
+	<bean id = "taobao" class="org.springframework.web.servlet.view.RedirectView">
+		<property name="url" value="http://www.taobao.com"></property>	
+	</bean>
+
+	<!-- 注册内部资源试图解析器，常采用这种方式 -->
+	<bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="prefix" value="/jsp/"></property>
+		<property name="suffix" value=".jsp"></property>
+	</bean>
+	
+	<!-- 文件上传配置 -->
+	<!-- id属性值唯一，因为此bean由系统自己调用 -->
+	<bean id="multipartResolver"
+		class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<!-- defaultEncoding：请求的编码格式必须和用户JSP的编码一致，以便正确读取表单中的内容。 uploadTempDir:文件上传过程中的临时目录，上传完成后，临时文件会自动删除 
+			maxUploadSize:设置文件上传大小上限（单位为字节）-1为无限制 -->
+		<property name="defaultEncoding" value="UTF-8" />
+		<property name="maxUploadSize" value="102400000" />
+		<!-- uploadTempDir可以不做设置，有默认的路径，上传完毕会临时文件会自动被清理掉 -->
+		<property name="uploadTempDir" value="/upload/"></property>
+	</bean>
+	
+	<!-- 
+	第一种异常操作方法
+	注册简单映射异常处理器
+	该异常处理器只能实现发生异常时进行页面跳转，而无法进行相应的处理。 -->
+	<!-- <bean class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver">
+		默认的错误页面
+		<property name="defaultErrorView" value="error"></property>
+		"ex"表示异常对象
+		<property name="exceptionAttribute" value="ex"></property>
+		<property name="exceptionMappings">
+			<props>
+				<prop key="com.study.springmvc.MyException">myError</prop>
+			</props>
+		</property>
+	</bean> -->
+	
+	<!-- 第二种异常处理方法：实现HandlerExceptionResolver接口并进行注册 -->
+	<!-- <bean class="com.study.springmvc.MyHandlerExceptionResolver"></bean> -->
+	
+	<!-- 注册自定义的类型转换器 -->
+	<bean id="myDateConverter" class="com.study.springmvc.MyDateConverter"></bean>
+	
+	<!-- 注册转换服务工厂bean -->
+	<bean id="conversionService" class="org.springframework.context.support.ConversionServiceFactoryBean">
+		<property name="converters">
+			<set>
+				<ref bean="myDateConverter"/>
+			</set>
+		</property>
+	</bean>
+	
+	<!-- 注册拦截器 -->
+	<mvc:interceptors>
+		<mvc:interceptor>
+			<mvc:mapping path="/**"/>
+			<bean class="com.study.springmvc.OneInterceptor"></bean>
+		</mvc:interceptor>
+		<mvc:interceptor>
+			<mvc:mapping path="/**"/>
+			<bean class="com.study.springmvc.TwoInterceptor"></bean>
+		</mvc:interceptor>
+	</mvc:interceptors>
+	
+	<!-- 生成验证器 -->
+	<bean id="myValidator" class="org.springframework.validation.beanvalidation.LocalValidatorFactoryBean">
+		<property name="providerClass" value="org.hibernate.validator.HibernateValidator"></property>
+	</bean>
+</beans>
